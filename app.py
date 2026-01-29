@@ -1,12 +1,16 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+
+# Set page config first
+st.set_page_config(page_title="HealthBot Dashboard", layout="wide")
+
+# Import plotting libraries after page config
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 import plotly.express as px
-
-# ---------- Page Config ----------
-st.set_page_config(page_title="HealthBot Dashboard", layout="wide")
 
 # ---------- Custom CSS ----------
 st.markdown("""
@@ -67,23 +71,28 @@ st.markdown("""
 @st.cache_data
 def load_data():
     """Create sample health data if CSV doesn't exist"""
+    np.random.seed(42)  # For reproducibility
     data = {
         'Name': [f'Person_{i}' for i in range(1, 51)],
         'Age': np.random.randint(20, 70, 50),
-        'BMI': np.random.uniform(18, 35, 50),
+        'BMI': np.round(np.random.uniform(18, 35, 50), 2),
         'Heart_Rate': np.random.randint(60, 100, 50),
         'Blood_Pressure': np.random.randint(110, 140, 50),
         'Cholesterol': np.random.randint(150, 250, 50),
         'Blood_Sugar': np.random.randint(70, 150, 50),
-        'Weight': np.random.uniform(50, 100, 50),
-        'Height': np.random.uniform(1.5, 1.9, 50)
+        'Weight': np.round(np.random.uniform(50, 100, 50), 1),
+        'Height': np.round(np.random.uniform(1.5, 1.9, 50), 2)
     }
     return pd.DataFrame(data)
 
 # Load data
-df = load_data()
-numeric_df = df.select_dtypes(include=['float64', 'int64'])
-numeric_columns = numeric_df.columns.tolist()
+try:
+    df = load_data()
+    numeric_df = df.select_dtypes(include=['float64', 'int64'])
+    numeric_columns = numeric_df.columns.tolist()
+except Exception as e:
+    st.error(f"Error loading data: {e}")
+    st.stop()
 
 # ---------- Sidebar ----------
 st.sidebar.markdown("### 🏥 HealthBot Menu")
@@ -217,7 +226,9 @@ if option == "🏠 Home":
     ax.legend(loc='upper left')
     ax2.legend(loc='upper right')
     ax.grid(True, alpha=0.3)
+    plt.tight_layout()
     st.pyplot(fig)
+    plt.close()
 
     # Sample Bar Chart
     st.markdown("### Sample Average Health Metrics")
@@ -238,7 +249,9 @@ if option == "🏠 Home":
                 f'{height:.1f}',
                 ha='center', va='bottom', fontsize=10)
     
+    plt.tight_layout()
     st.pyplot(fig2)
+    plt.close()
 
 # ------------------- BMI CALCULATOR -------------------
 elif option == "🧮 BMI Calculator":
@@ -293,7 +306,9 @@ elif option == "🧮 BMI Calculator":
         ax.set_ylim(-0.5, 0.5)
         ax.axis('off')
         ax.legend(loc='upper right')
+        plt.tight_layout()
         st.pyplot(fig)
+        plt.close()
 
 # ------------------- VISUALIZATIONS -------------------
 elif option == "📊 Visualizations":
@@ -318,6 +333,7 @@ elif option == "📊 Visualizations":
         ax.grid(axis='y', alpha=0.3)
         plt.tight_layout()
         st.pyplot(fig)
+        plt.close()
         
         # Statistics
         st.markdown("### Statistics")
@@ -343,6 +359,7 @@ elif option == "📊 Visualizations":
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
         st.pyplot(fig)
+        plt.close()
         
     elif chart_type == "Distribution Plot":
         metric = st.selectbox("Choose Metric", numeric_columns)
@@ -367,6 +384,7 @@ elif option == "📊 Visualizations":
         
         plt.tight_layout()
         st.pyplot(fig)
+        plt.close()
         
     else:  # Correlation Heatmap
         st.markdown("### Correlation Between Health Metrics")
@@ -380,6 +398,7 @@ elif option == "📊 Visualizations":
         ax.set_title("Health Metrics Correlation Matrix", fontsize=14, pad=20)
         plt.tight_layout()
         st.pyplot(fig)
+        plt.close()
         
         st.markdown("""
         **How to read this heatmap:**
